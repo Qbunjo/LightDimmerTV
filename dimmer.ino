@@ -5,31 +5,34 @@
 const char* ssid     = "SSID";
 const char* password = "PASS";
 
-const IPAddress tv_ip(192, 168, 0, 99); //TV IP
+const IPAddress tv_ip(192, 168, 0, 90); //TV IP
 bool curState;
-int lowLight = 85;
-int highLight = 254;
+int lowLight = 255;
+int highLight = 1023;
 int pin = 2;
-bool flagTv = false;
+bool dimDone = 1;
 
 void lightsUp() {
   for (int i = lowLight; i < highLight; i++) {
     analogWrite(pin, i);
+       Serial.println(i);
     delay(10);
   }
-  flagTv = false;
+  analogWrite(pin, 1024);
+     dimDone=0;
 
 }
 
 void dim() {
-  for (int i = highLight; i > lowLight; i--) {
+  for (int i = highLight; i >= lowLight; i--) {
     analogWrite(pin, i);
+    Serial.println(i);
     delay(10);
   }
-  flagTv = true;
-}
+  dimDone=1;
+  }
 void setup() {
-  pinMode(2, OUTPUT);
+//  pinMode(2, OUTPUT);
   Serial.begin(115200);
   analogWrite(pin, lowLight);
   delay(10);
@@ -64,12 +67,15 @@ void loop() {
   Serial.print("Pinging ip ");
   Serial.println(tv_ip);
   curState = Ping.ping(tv_ip);
+  Serial.print("Current tv state: ");
   Serial.println(curState);
-  if (curState == 0 and flagTv == false) {
+  Serial.print("Light dimmed: ");
+  Serial.println(dimDone);
+  if (curState == 0 and dimDone==1) {
     Serial.println("TV off. Lights up.");
     lightsUp();
     Serial.println(curState);
-  } else if (curState == 1 and flagTv == true) {
+  } else if (curState == 1 and dimDone==0) {
     Serial.println("TV on. Dimming ");
     dim();
     Serial.println(curState);
